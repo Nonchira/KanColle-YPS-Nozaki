@@ -1,0 +1,275 @@
+--- a/devtools.js
++++ b/devtools.js
+@@ -525,6 +525,7 @@
+ 
+ function update_ndock_list(list) {
+ 	if (!list) return;
++	$nozaki_ndock_known = true;
+ 	$ndock_list = {};
+ 	list.forEach(function(data) {
+ 		var ship_id = data.api_ship_id;
+@@ -1908,6 +1909,34 @@
+ //------------------------------------------------------------------------
+ // 母港画面表示.
+ //
++
++// 野埼: セッション中に観測した通信だけで時刻を推定する。
++var $nozaki_timer = new NozakiTimer.Timer();
++var $nozaki_ndock_known = false;
++function nozaki_snapshot() {
++ return {
++  fuel: $material.now[0] == null ? null : $material.now[0],
++  decks: Object.values($fdeck_list).map(d => ({
++   id: d.api_id, mission: d.api_mission ? d.api_mission[0] !== 0 : null,
++   ships: d.api_ship.map(id => {
++    const s = $ship_list[id];
++    if (!s) return null;
++    const m = $mst_ship[s.ship_id] || {};
++    return {id: s.id, name: m.api_name || '不明', cond: s.c_cond == null ? null : s.c_cond,
++     hp: s.nowhp, maxHp: s.maxhp, fuel: s.fuel, ammo: s.bull,
++     fuelMax: m.api_fuel_max, ammoMax: m.api_bull_max,
++     docked: $nozaki_ndock_known ? !!$ndock_list[id] : null};
++   })
++  }))
++ };
++}
++var $nozaki_at_port = false;
++function nozaki_publish() {
++ if (!Object.keys($fdeck_list).length) return;
++ chrome.runtime.sendMessage({nozakiTimer: $nozaki_timer.view(nozaki_snapshot()), nozakiAtPort: $nozaki_at_port});
++}
++setInterval(nozaki_publish, 3000);
++
+ function print_port() {
+ 	if ($do_print_port_on_ndock) return;
+ 	if ($do_print_port_on_slot_item) return;
+@@ -2340,6 +2369,10 @@
+ //
+ function print_mapinfo(uncleared, air_base) {
+ 	var req = ["# 海域選択"];
++
++	// 受信した任務・戦闘・ゲージ情報だけを使う戦果メモ。
++	var senka_lines = ypsSenka.lines();
++	req.push(senka_lines[0], ['YPS_senka_memo'].concat(senka_lines.slice(1)));
+ 	if (uncleared.length > 0) {
+ 		var msg = ['YPS_uncleared_mapinfo'];
+ 		msg = msg.concat(uncleared);
+@@ -3334,6 +3367,33 @@
+ 	add_ship_escape($escape_info.api_tow_idx[0]);		// 護衛可能艦一覧の最初の艦を退避リストに追加する.
+ }
+ 
++// Use an observed fleet ID only; never guess fleet 1 when data is missing.
++function battle_fdeck(data) {
++	var raw = data && (data.api_deck_id != null ? data.api_deck_id : data.api_dock_id);
++	var id = raw == null ? Number($battle_deck_id) : Number(raw);
++	if (!Number.isInteger(id) || id < 1 || id > 4) {
++		if (raw != null) $battle_deck_id = -1;
++		return null;
++	}
++	if (raw != null) $battle_deck_id = id;
++	var deck = $fdeck_list[id];
++	if (!deck || !Array.isArray(deck.api_ship)) return null;
++	$battle_deck_id = id;
++	return deck;
++}
++
++function push_battle_mvp(req, deck, index, experience) {
++	if (!(index > 0)) return;
++	var id = deck && deck.api_ship && deck.api_ship[index-1];
++	var ship = $ship_list[id];
++	if (!ship || typeof ship.name_lv !== 'function') {
++		req.push('MVP: 艦娘情報未取得（順位 ' + index + '）');
++		return;
++	}
++	var exp = experience && experience[index];
++	req.push('MVP: ' + ship.name_lv() + (exp == null ? '（経験値未取得）' : ' +' + exp + 'exp'));
++}
++
+ function on_battle_result(json) {
+ 	var d = json.api_data;
+ 	var e = d.api_enemy_info;
+@@ -3454,16 +3514,8 @@
+ 	if (d.api_get_base_exp > 0) {
+ 		req.push('基本EXP: ' + d.api_get_base_exp);
+ 	}
+-	if (mvp > 0) {
+-		var id = $fdeck_list[$battle_deck_id].api_ship[mvp-1];
+-		var ship = $ship_list[id];
+-		req.push('MVP: ' + ship.name_lv() + ' +' + d.api_get_ship_exp[mvp] + 'exp');
+-	}
+-	if (mvp_c > 0) {
+-		var id = $fdeck_list[2].api_ship[mvp_c-1];
+-		var ship = $ship_list[id];
+-		req.push('MVP: ' + ship.name_lv() + ' +' + d.api_get_ship_exp_combined[mvp_c] + 'exp');
+-	}
++	push_battle_mvp(req, battle_fdeck(d), mvp, d.api_get_ship_exp);
++	push_battle_mvp(req, $fdeck_list[2], mvp_c, d.api_get_ship_exp_combined);
+ 	if(Object.keys(e_lost_ship_type_count).length) {
+ 		var e_lost_ship_detail = '敵撃破:';
+ 		for(var stype in e_lost_ship_type_count) { // 連想配列のキーとして取り出すと文字列が得られる
+@@ -3927,6 +3979,15 @@
+ 	req.push(dbg);
+   try {
+ 	var d = $battle_api_data = json.api_data;
++	var fdeck = battle_fdeck(d);
++	if (!fdeck && globalThis.chrome?.devtools?.inspectedWindow?.tabId != null) {
++		$battle_info = '編成情報未取得';
++		$guess_win_rank = '?';
++		$enemy_formation = '不明';
++		$enemy_ship_names = [];
++		req.splice(0, req.length, '# 戦闘データ受信', '出撃艦隊の情報が未取得のため、戦闘詳報を表示できません。母港受信後に確認してください。');
++		return req;
++	}
+ 	var f_maxhps = concat_hps(d.api_f_maxhps, d.api_f_maxhps_combined); // 通常艦隊[0..5], 増強第三艦隊[0..6], 第一/第二連合艦隊[0..5,6..11]
+ 	var f_nowhps = concat_hps(d.api_f_nowhps, d.api_f_nowhps_combined);
+ 	var f_beginhps = f_nowhps.concat();
+@@ -4070,7 +4131,6 @@
+ 		}
+ 		break;
+ 	}
+-	var fdeck = $fdeck_list[$battle_deck_id = d.api_deck_id];
+ 	var fmt = null;
+ 	if (d.api_formation) {
+ 		fmt = formation_name(d.api_formation[0])
+@@ -4184,7 +4244,10 @@
+ 	req.push('# @!!' + ex.toString() + '!!@');
+ 	console.error(ex);
+   } finally {
+-	if (!fdeck) return req; // for on-battle-test.html.
++	if (!fdeck) {
++		if (globalThis.chrome?.devtools?.inspectedWindow?.tabId != null) chrome.runtime.sendMessage(req);
++		return req; // for on-battle-test.html.
++	}
+ 	chrome.runtime.sendMessage(req);
+   }
+ }
+@@ -4255,10 +4318,7 @@
+ 			update_mst_stype(json.api_data.api_mst_stype);
+ 			sync_cloud();
+ 			chrome.runtime.sendMessage("## ロード完了");
+-			debug_print_mst_slotitem();
+-			debug_print_newship_slots();
+-			debug_print_as_json($remodel_slotlist, 'remodel_slotlist');
+-			debug_print_as_json($remodel_slotweek, 'remodel_slotweek');
++			// Developer dumps remain callable, but do not build/render them at login.
+ 		};
+ 	}
+ 	else if (api_name == '/api_get_member/require_info') { // 2016.4 メンテで追加された.
+@@ -4478,6 +4538,8 @@
+ 		};
+ 	}
+ 	else if (api_name == '/api_req_hensei/change') {
++		func = function(json) {
++		const nozakiBefore = nozaki_snapshot();
+ 		// 艦隊編成.
+ 		var params = decode_postdata_params(request.request.postData.params);
+ 		var list = $fdeck_list[params.api_id].api_ship;	// 変更艦隊リスト.
+@@ -4516,7 +4578,10 @@
+ 			}
+ 		}
+ 		update_fdeck_list($fdeck_list); // 編成結果を $ship_fdeck に反映する.
++		$nozaki_timer.formation(nozakiBefore, nozaki_snapshot(), id, Date.now(), params.api_id);
++		nozaki_publish(); // 通常の母港表示処理より先にリセット時刻を届ける.
+ 		print_port();
++		};
+ 	}
+ 	else if (api_name == '/api_req_hensei/lock') {
+ 		// 艦娘ロック.
+@@ -4537,10 +4602,13 @@
+ 	}
+ 	else if (api_name == '/api_get_member/questlist') {
+ 		// 任務一覧.
+-		let tab_id = decode_postdata_params(request.request.postData.params).api_tab_id;
++		const quest_params = decode_postdata_params(request.request.postData.params);
++		let tab_id = quest_params.api_tab_id;
+ 		func = function(json) { // 任務総数と任務リストを記録する.
+ 			const w = get_weekly();	// 5:00JSTをまたぐと、get_weekly()内で $quest_count が -1 にリセットされる.
+-			if ($quest_count == -1) {
++			if ($quest_count == -1 || (tab_id == 0 && quest_params.api_page_no == 1)) {
++				// 全一覧を開き直したら古い状態を未確認に戻し、受信ページだけ再確認する。
++				// 一覧から消えたことだけではクリア済みと判定しない。
+ 				// 任務一覧の初回は、前回保存した遂行状態をすべてリセットする.
+ 				// 他のPCでクリアした任務はapi_listから消えるので遂行状態が永遠に更新できない. この不具合を避けるため.
+ 				for (let id in $quest_list) {
+@@ -4613,26 +4681,28 @@
+ 	else if (api_name == '/api_req_quest/stop') {
+ 		// 任務解除.
+ 		var params = decode_postdata_params(request.request.postData.params);
+-		let quest = $quest_list[params.api_quest_id];
+-		if (quest) {
+-			quest.api_state = 1; // 未遂行に戻す. 任務リスト表示が「遂行中のみモード」の場合、直後の任務リストから消えて更新されないのでこれが必要である.
+-			// 直後に来る /api_get_member/questlist の処理にて、遂行中任務カウンタ更新とデータ保存と再表示が行われるので、ここではそれらの処理は不要である.
+-		}
++		func = function() {
++			let quest = $quest_list[params.api_quest_id];
++			if (quest) quest.api_state = 1;
++			save_storage('quest_list', $quest_list);
++		};
+ 	}
+ 	else if (api_name == '/api_req_quest/clearitemget') {
+-		// 任務クリア.
+-		var params = decode_postdata_params(request.request.postData.params);
+-		let id = params.api_quest_id;
+-		let quest = $quest_list[id];
+-		if (quest) {
+-			quest.api_state = -1; // 達成をリセットする.
+-			$quest_clear[id] = $svDateTime.getTime(); // クリア時刻を記録し、クリア済みをマークする.
+-			$quest_count--;		// 絞り込み任務リストの場合は, 直後の api_get_member/questlist では任務総数が得られないのでここで更新する.
++		// 状態変更も成功応答の受信順で処理する。先行する古い一覧で上書きさせない。
++		const params = decode_postdata_params(request.request.postData.params);
++		func = function() {
++			const id = params.api_quest_id;
++			if (!Number.isInteger(Number(id)) || Number(id) <= 0) return;
++			const quest = $quest_list[id];
++			if (quest) {
++				if (quest.api_state > 0 && $quest_count > 0) $quest_count--;
++				quest.api_state = -1;
++			}
++			$quest_clear[id] = $svDateTime.getTime();
+ 			save_quest_clear();
+-			// 直後に来る /api_get_member/questlist の処理にて、遂行中任務カウンタ更新とデータ保存と再表示が行われるので、ここではそれらの処理は不要である.
+-		}
+-		$material_sum = $material.quest;
+-		// 直後に /api_get_member/material パケットが来るので print_port() は不要.
++			save_storage('quest_list', $quest_list);
++			$material_sum = $material.quest;
++		};
+ 	}
+ 	else if (api_name == '/api_get_member/material') {
+ 		// 建造後、任務クリア後など.
+@@ -4700,9 +4770,11 @@
+ 	else if (api_name == '/api_port/port') {
+ 		// 母港帰還.
+ 		func = function(json) { // 保有艦、艦隊一覧を更新してcond表示する.
++			const nozakiBefore = nozaki_snapshot();
+ 			update_ship_list(json.api_data.api_ship);
+ 			update_fdeck_list(json.api_data.api_deck_port);
+ 			update_ndock_list(json.api_data.api_ndock);
++			$nozaki_timer.port(nozakiBefore, nozaki_snapshot(), Date.now());
+ 			$ship_escape = {};
+ 			$combined_flag = json.api_data.api_combined_flag;	// 連合艦隊編成有無.
+ 			update_material(json.api_data.api_material, $material.autosupply);	// 資材を更新する. 差分を自然増加として記録する.
+@@ -5130,11 +5202,18 @@
+ 		on_goback_port();
+ 	}
+ 	if ($weekly.savetime == 0) save_weekly();
+-	if (!func) return;
+-	request.getContent(function (content) {
+-		if (!content) return;
+-		var json = JSON.parse(content.replace(/^svdata=/, ''));
+-		if (!json || !json.api_data) return;
++	if (!func && !ypsSenka.watches(api_name)) { nozaki_publish(); return; }
++	ypsSenka.receive(request, api_name, function (json) {
++		if (json.api_result === 1) {
++			if (api_name === '/api_port/port') $nozaki_at_port = true;
++			else if (/^\/api_req_(map\/(start|next)$|sortie\/|combined_battle\/|battle_midnight\/|practice\/)/.test(api_name)) {
++				$nozaki_at_port = false;
++				nozaki_publish();
++			}
++		}
++		if (!func) { nozaki_publish(); return; }
++		if (!json.api_data && !['/api_req_hensei/change', '/api_req_quest/stop', '/api_req_quest/clearitemget'].includes(api_name)) return;
+ 		func(json, api_name);
++		nozaki_publish();
+ 	});
+ });

@@ -1,0 +1,16 @@
+{
+  "upstream": "https://github.com/hkuno9000/KanColle-YPS",
+  "version": "2.3.1",
+  "files": {
+    "background-wrapper.js": "12deafbf7a0135d1a805a649f83e3e427ad57178989fa8bb276148f73353df36",
+    "background.js": "4e24715ff748b392bc4f66eb2823e2fdec64e3b3a919a32ada6db6b486c19b9a",
+    "content.js": "c5ccf26a73629829a53739b4b1cbe7fc1076b48ce8188986c67ee56a9ec7d2f5",
+    "devtools.html": "5774463fb834d77ecdce76308174ebd23385a23b624d80f68549e102d867b116",
+    "devtools.js": "24f8f8e1b85d0ccf420e005e322ce6f30b86b43ff9f8693ecc1974aa4d37ab6c",
+    "eventnames.js": "cbbf660265d23bb749ad6cebfe7a42b2e7ae0fd34ff283ab06516cf2b864bcb3",
+    "manifest.json": "9d58469b26e49d2ecff2b8d7f914e076bfb6e2465a1caad02e86db12eb0f1947",
+    "newship.js": "105f405d6f1e1092c516ef4de81348677c5131ae86a995dbea2debc02069c1aa",
+    "style-yps.css": "5c612654bbd27c79ecb7de64016f278db19f14b684fd3c7966e30d2d69163801"
+  },
+  "scope": "Runtime integration files only; not a full upstream checkout. Hashes identify exact baseline."
+}

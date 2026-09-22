@@ -1,152 +1,62 @@
-# 艦これ余所見プレイ支援 KanColleYPS
-* v2.3.1: イベント戦闘データ解析改善: 2026-08-11
-* 公開サイト: https://hkuno9000.github.io/KanColle-YPS
-* 不具合報告先: https://github.com/hkuno9000/KanColle-YPS/issues
-* リリース履歴: https://github.com/hkuno9000/KanColle-YPS/releases
-* 開発者X(旧twitter): https://x.com/hkuno9000
-  * ⚓#KanColleYPS の話題を
-    [ポストする](https://twitter.com/intent/tweet?hashtags=KanColleYPS,艦これYPS&text=⚓)
-    、[検索する](https://x.com/search?q=KanColleYPS&src=typed_query&f=live)
-* WebStore版インストーラ: https://chrome.google.com/webstore/detail/kancolle-yps/fiidhnjbokehclfcglmpgpllfdpejgof
-* 開発版ZIPファイル: https://github.com/hkuno9000/KanColle-YPS/archive/refs/heads/master.zip
+# KanColle-YPS v2.3.1 +NozakiTimer v1.0.0
 
-## 開発コンセプト
-* 艦これの画面から目を離していても、ゲーム進行状況をすべて把握することが目的です。
-* 遠征終了時刻や任務遂行状況を記録し、メモがわりに使えるようにします。
-* 大破進撃を検出して警告します。
-* 各艦毎の攻撃種別・使用装備・与ダメージを戦闘詳報として記録し、攻撃力検証に使えるようにします。
-* キラ付け、近代化改修、装備改修、熟練度など、ロックした艦と装備の全内容を一覧表示します。
+[KanColle-YPS](https://github.com/hkuno9000/KanColle-YPS) v2.3.1を基にした非公式の派生版です。野埼タイマー、戦果メモ、行動・ドロップ履歴、任務・期限管理、艦隊コンパスを追加しています。原作者による公式版・推奨版ではありません。
 
-## WebStore版と開発版の違い
-機能に違いはありません。
-バグ修正をしたり独自の改造を加えたい場合は開発版を、それ以外はWebStore版を使ってください。
+## 公開版
 
+公開リポジトリ: [Nonchira/KanColle-YPS-Nozaki](https://github.com/Nonchira/KanColle-YPS-Nozaki)
 
-## WebStore版のインストール方法
-1. [Chrome WebStore](https://chrome.google.com/webstore/detail/kancolle-yps/fiidhnjbokehclfcglmpgpllfdpejgof) を開き、CHROMEに追加する.
+[ZIPをダウンロード](https://github.com/Nonchira/KanColle-YPS-Nozaki/archive/refs/heads/master.zip)して、展開先のmanifest.jsonがあるフォルダを読み込んでください。
 
-## 開発版のインストール方法
-1. [開発版ZIPファイル](https://github.com/hkuno9000/KanColle-YPS/archive/refs/heads/master.zip) をダウンロードし、適当なフォルダへ展開する
-1. または `git clone https://github.com/hkuno9000/KanColle-YPS.git` でフォルダへ展開する
-1. Google Chromeの拡張機能設定ページを開く(右肩の三本線→設定→左列の拡張機能)
-1. 【デベロッパー モード】にチェックを入れる
-1. 【パッケージ化されていない拡張機能を読み込む】ボタンを押して、ソース展開したフォルダを指定する(これで拡張機能がインストールされる)
-1. Google Chrome起動時に「デベロッパーモードの拡張機能を無効にする」とのメッセージボックスを「キャンセル」する.
-  * **「キャンセル」ではなく「無効にする」を選ぶと、このプラグインが無効化されてしまいます。**
+このv1.0.0は動作確認済みの派生版構成です。上流masterの最新機能すべてを取り込んだ版ではありません。比較基準はUpdate/baseline.jsonに記録し、以後の上流変更は個別に確認して移植します。
 
-## 開発版のバージョンアップ方法
-1. ソース展開フォルダへZIPファイルの中身を上書き(または `git pull`)して、Chromeを再起動する.
+## インストール
 
-## 使い方
-1. Google Chrome にて、「艦これ」にログインする.
-1. 艦これゲーム画面の「GAME START」をクリックする前に、Google Chromeの【デベロッパー ツール】を起動する. 起動方法は、
-  * Chrome右肩の︙→その他のツール→デベロッパーツール.
-  * または F12キー(MacOSではCmd+Option+I) を押す.
-1. デベロッパーツールがゲーム画面を圧迫しないように、ツールウィンドウ右上肩の三本線＞Dock side＞画面下を選び、ウィンドウ境界をドラッグして最少サイズにします.
-1. 艦これゲーム画面の「START GAME」をクリックする.
-1. 母港画面では、画面右側に「資材増減数、艦娘保有数、装備保有数、改造/近代化改修可能艦数、キラ付艦数、修理中、建造中、任務遂行数、艦隊１～４」の各メニューが表示されます。
-1. メニューの ▶ ボタンをクリックすると詳細が表示されます。
-1. 艦隊１～４の Cond 値は49が平常で50以上がキラキラです。53以上が二重キラ、85以上が三重キラです。
-1. あ号任務についてはその内訳（出撃数、ボス勝利、ボス到達、S勝利）を表示します。
-1. ドラム缶装備の待機艦（遠征交代要員）をCond値別に一覧表示します。
-1. 羅針盤・陣形選択画面では次戦闘マスにて過去に遭遇した敵編成の一覧を表示します。大破進撃ならば警告します。
-1. 戦闘画面では、画面右側に敵味方艦隊のダメージ(撃沈、大破、中破、小破)と戦果を表示します。
-1. 遠征、演習、入渠時には任務受諾状況を表示し、任務チェック漏れを警告します。
-1. 遠征結果、道中資源、任務達成、入渠、工廠による資材増減を記録して表示します。週間収支(月曜5:00AM以降の増減)と今回収支(ログイン以降の増減)も表示します。
-1. gooleアカウントの同期機能を利用して、週間収支とあ号任務の進捗内訳をPC間で同期します。(右肩の三本線→設定→ログイン同期の詳細設定　にてアプリと拡張機能にチェックを入れる)
-1. 画面最上部の「全閉」ボタンはメニューをすべて閉じます。
-1. 画面最上部の「←」「→」ボタンは表示内容を履歴参照します。
+1. 配布ZIPをダウンロードし、任意のフォルダへ展開します。
+2. Chromeで `chrome://extensions/` を開き、デベロッパーモードを有効にします。
+3. 既存のYPSが有効な場合は、二重動作を避けるため無効にします。
+4. 「パッケージ化されていない拡張機能を読み込む」で、展開先の **manifest.jsonがあるフォルダ** を指定します。
+5. 艦これを開き、GAME STARTの前にF12でデベロッパーツールを開きます。
+6. 母港受信後、必要な任務一覧・遠征メニューを通常操作で開いてください。
 
-### 索敵スコアについて
+展開先は利用中に移動・削除しないでください。初回はビルド不要です。テスト実行用のNode.jsや配布作成用のPythonは、通常利用には不要です。
 
-* 索敵分岐マスの索敵スコア(判定式33)を計算して、母港画面の各艦隊見出しに表示します。
-  * ※  索敵値の低いキラ付け艦隊や遠征艦隊には不要な情報なので、索敵スコア0以下なら表示しません。
-* デフォルトでは分岐点係数1で索敵スコアを計算します。
-* 艦隊名の先頭に"海域番号"をつけると、その海域の分岐点係数で計算します。
-* 艦隊名の先頭に"分岐点係数;"をつけると、その値で計算します。
+## 機能
 
-例:
-- 艦隊名:"2-5第五戦隊" -> 海域2-5(分岐点係数1)
-- 艦隊名:"6-1周回艦隊" -> 海域6-1(分岐点係数4)
-- 艦隊名:"2;調査艦隊" -> 海域???(分岐点係数2)
+| 機能 | 表示・用途 |
+|---|---|
+| 野埼タイマー | 経過時間、随伴艦の最低推定cond、上限54の赤字表示、艦ごとの詳細 |
+| 戦果メモ | EO・戦果任務の状態、海域別回数、戦果手動入力 |
+| 行動履歴 | 通常海域／遠征の2タブ、日別・種類別連番、最終戦のマス、詳細・ページ送り |
+| ドロップ履歴 | 艦種・艦名・海域・マス・勝利ランク、50件／100件表示 |
+| 任務・期限管理 | 日次・週次・月次・四半期・年次の状態と期限、前提関係、記録・補正 |
+| 編成・装備ジェネレーター | 保有情報を使った通常海域のゲージ別候補・遠征条件の確認 |
 
-対応している海域番号を表に示します。
-これ以外の海域については"分岐点係数;"を指定して各自対応願います。
+艦隊コンパスは「制空権シミュ」の右隣のボタンから開きます。上部タブは行動履歴、ドロップ履歴、通常海域、遠征、戦果、任務・期限管理の順です。
 
-海域番号 | 分岐点係数 | 分岐マス名:外れ回避に必要な索敵スコア
----------|-----------:|-----------------|
-1-6 | 3 | M:30
-2-5 | 1 | G:41, I:34, J:49
-3-5 | 4 | G:28, H:40
-4-5 | 2 | K:70, Q:59
-5-2 | 2 | F:70, L:62
-5-4 | 2 | M:45, L:60
-5-5 | 2 | O:66, P:80
-6-1 | 4 | G:16, H:25
-6-2 | 3 | E:50, H:32, I:40
-6-3 | 3 | H:38
-6-5 | 3 | G:50, J:35
-7-2 | 4 | E:46, I:69
+野埼タイマーは出撃・戦闘の受信で非表示、母港受信で再表示します。内部の経過計算は継続します。通信のない画面移動まで厳密に識別するものではありません。
 
-### 母港画面サンプル
-![port screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-port.png)
+## 起動と読み込み
 
-### 戦況画面サンプル
-![battle screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-battle.png)
+YPS本体の母港処理後に艦隊コンパスを読み込みます。待機中の受信本文はメモリ内で一時保持し、起動後に受信順で保存します。コンパス画面は表示中のタブに必要な履歴だけを取得し、行動履歴は256件単位で読み込みます。初回の読み込み中はその旨を表示します。診断用の長い表示は通常画面に出しません。
 
-### 戦闘詳報サンプル
-![battle screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-battle-detail.png)
+## 保存・推定の範囲
 
-### 羅針盤画面の大破進撃警告サンプル
-![battle screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-next-damage-alert.png)
+追加機能は通常プレイで受信した情報を使用し、ゲームAPIへの追加リクエスト・再送・自動操作を行いません。受信本文の再読取はChrome内の取得済みデータに限ります。既存YPSのChrome同期と、ボタン操作による外部シミュレーターへの出力は別系統です。
 
-### 帰港画面サンプル
-![battle screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-ret.png)
+一つのブラウザプロファイルで一提督を対象とします。記録はブラウザ内に保存され、配布ZIPにプレイ記録は含まれません。別PC・スマホでの未観測の行動は復元できません。任務は受信情報・推定・未確認・手動補正を区別します。拡張機能の削除、ID変更、ブラウザデータの消去で記録が失われる場合があります。
 
-### 資材収支表サンプル
-![battle screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-supply.png)
+## 更新
 
-### ロック艦一覧（cond降順)サンプル
-![locked ship screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-cond-list.png)
+同じ展開先へ新版を反映し、拡張機能を再読み込みしてください。F12とゲームページ、艦隊コンパスも開き直します。更新前には必要な記録を各画面から保存してください。任務記録の保存／復元は全ブラウザデータの移行機能ではありません。
 
-### ロック装備一覧（改修中★とレベル数付)サンプル
-![locked slotitem screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-slotitem-list.png)
+オリジナルの更新は、本派生版への単純上書きでは追加機能が失われます。[Update/README.md](Update/README.md) に、基準版との比較・機能別移植・検証手順を収録しています。自動更新・定期監視はありません。
 
-### 改造、近代化改修可能艦一覧サンプル
-![kaizou screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-kaizou-list.png)
+派生版番号は **v1.0.0**、Chrome内部番号は **2.3.1.1** です。基準YPSのv2.3.1と、派生版の番号は別に管理します。変更内容は [CHANGELOG.md](CHANGELOG.md) を参照してください。
 
-### 修理中(入渠)、要修理艦一覧サンプル
-![kaizou screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-repair-list.png)
+## ドキュメント
 
-### 改修工廠サンプル
-![remodel screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-remodel-slotitem.png)
+詳しい機能説明・仕様・検証・出典は [ドキュメント一覧](docs/README.md) にまとめています。
+オリジナル更新時の移植資料は [Update](Update/README.md)、版ごとの変更は [変更履歴](CHANGELOG.md) を参照してください。
 
-### 未ロック、未保有、ダブリ艦一覧サンプル
-![unlock unown double screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-unlock-unown-double.png)
-
-### 次戦闘マス敵遭遇回数記録サンプル
-![next enemy count screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-next-enemy-count.png)
-
-### 遠征交代要員一覧サンプル
-![kira standby screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-kira-standby.png)
-
-### 演習任務チェックサンプル
-![practice quest check screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-practice-quest-check.png)
-
-### 遠征任務チェックサンプル
-![practice quest check screenshot](https://hkuno9000.github.io/KanColle-YPS/images/YPS-mission-quest-check.png)
-
-## 注意事項
-* 大破進撃は自己責任でお願いします。
-* 戦闘後のドロップ艦が持ってきた装備の数は、母港帰還までカウントできない場合があります。
-
-## 仕組みなど
-元々Google Chromeにあるネットワークをモニタリングする機能を使って、サーバから送られてくる各種情報を拾って、ゲーム画面の右端にテキスト表示します。
-完全にパッシブ動作で、ゲームサーバへのリクエスト送信はしません。自動実行機能もありません。
-仕組み上、ゲーム画面の演出進行と、こちらの表示更新のタイミングが合いません。先に結果が見えてしまいますがご容赦ください。
-
-## 参考プロジェクト
-下記を元にして自分が欲しい機能を付け足しました。
-
-* 本家: https://github.com/kageroh/cond_checker
-* 一部機能をマージ: https://github.com/t-f-m/cond_checker_mod
+任務定義は艦これWiki、海域・遠征条件はぜかまし等を参照しています。出典URLとデータの取得履歴は各定義に保持しています。ゲーム側の最新仕様を実行時に自動取得する機能ではありません。

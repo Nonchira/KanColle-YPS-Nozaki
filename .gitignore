@@ -6,3 +6,8 @@ tmp/
 fix/
 wk/
 wk.*/
+
+# Local workspace metadata and generated caches
+knowledge-domain.json
+__pycache__/
+*.pyc

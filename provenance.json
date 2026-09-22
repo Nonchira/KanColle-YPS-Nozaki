@@ -1,0 +1,90 @@
+{
+  "schema_version": 2,
+  "upstream": "https://github.com/hkuno9000/KanColle-YPS",
+  "base_version": "2.3.1",
+  "fork_version": "1.0.0",
+  "original_files": [
+    {
+      "path": ".gitignore",
+      "sha256": "ba640b8d8a321428b71d03a14279bacc499839deb5ac6e6a5437dd85c10bfb04"
+    },
+    {
+      "path": "background-wrapper.js",
+      "sha256": "12deafbf7a0135d1a805a649f83e3e427ad57178989fa8bb276148f73353df36"
+    },
+    {
+      "path": "background.js",
+      "sha256": "4e24715ff748b392bc4f66eb2823e2fdec64e3b3a919a32ada6db6b486c19b9a"
+    },
+    {
+      "path": "content.js",
+      "sha256": "c5ccf26a73629829a53739b4b1cbe7fc1076b48ce8188986c67ee56a9ec7d2f5"
+    },
+    {
+      "path": "devtools.html",
+      "sha256": "5774463fb834d77ecdce76308174ebd23385a23b624d80f68549e102d867b116"
+    },
+    {
+      "path": "devtools.js",
+      "sha256": "24f8f8e1b85d0ccf420e005e322ce6f30b86b43ff9f8693ecc1974aa4d37ab6c"
+    },
+    {
+      "path": "eventnames.js",
+      "sha256": "cbbf660265d23bb749ad6cebfe7a42b2e7ae0fd34ff283ab06516cf2b864bcb3"
+    },
+    {
+      "path": "icons/icon128.png",
+      "sha256": "f6179d1ef4148b76a66f970df0edf4cab246b415197c2114363cfbc6b7d13d71"
+    },
+    {
+      "path": "icons/icon16.png",
+      "sha256": "caa06bc00d3212fd8f6c69c715b0eb19b2acaed3e0e7f02233156fd8f1486cdb"
+    },
+    {
+      "path": "icons/icon48.png",
+      "sha256": "8b4af6f71101f4c277278f29bbe18b0913f6b2b0af74ad3591bbf1cd5b5af1e1"
+    },
+    {
+      "path": "manifest.json",
+      "sha256": "9d58469b26e49d2ecff2b8d7f914e076bfb6e2465a1caad02e86db12eb0f1947"
+    },
+    {
+      "path": "newship.js",
+      "sha256": "105f405d6f1e1092c516ef4de81348677c5131ae86a995dbea2debc02069c1aa"
+    },
+    {
+      "path": "README.md",
+      "sha256": "73934dcf6b6618a7b13af3dd89324752643b8353a32f996def7aa3a41d8b355d"
+    },
+    {
+      "path": "sh/appzip.sh",
+      "sha256": "f8f1c83443493e1793a298f576a9da2c3c5508fbe42a33d2e8ae59829971cfa8"
+    },
+    {
+      "path": "sh/push.sh",
+      "sha256": "9b5aa575a69c7316e060993a233a65321bfa052424c55861e7cc27611dbddfa0"
+    },
+    {
+      "path": "sh/setver.pl",
+      "sha256": "f52a334f3f6e11150b12f4a41179e70a9c763ba2b5c8cdf90844d11d0d893aff"
+    },
+    {
+      "path": "style-yps.css",
+      "sha256": "5c612654bbd27c79ecb7de64016f278db19f14b684fd3c7966e30d2d69163801"
+    },
+    {
+      "path": "test/guess-win-test.html",
+      "sha256": "b79280a487011f0a2acae9c88f2643759ac61fc1b6da26bf664f7654b8001f72"
+    },
+    {
+      "path": "test/json-stringify.html",
+      "sha256": "9d7de98fa53660419f31e00c56623283343ff25922e2fb461b4fbb585dc9e703"
+    },
+    {
+      "path": "test/on-battle-test.html",
+      "sha256": "d7009b712d25079b86d7418b2186eb819270ce5c97b8dbecebac85cce58fd35a"
+    }
+  ],
+  "current_inventory": "Update/release-files.json",
+  "note": "Original file hashes identify the stored baseline; no assumption of latest upstream compatibility."
+}

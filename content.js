@@ -5,9 +5,7 @@ const ver_name = chrome.runtime.getManifest().version_name;
 const home_url = chrome.runtime.getManifest().homepage_url;
 var div = document.createElement('div');
 div.classList.add('yps-body');
-div.innerHTML = "艦これ余所見プレイ支援"
-	+ version_banner()
-	+ "<h3>使い方</h3>"
+div.innerHTML = "<h3>使い方</h3>"
 	+ "<ol style='list-style: decimal;'><li>艦これにログインする.<li>艦これゲーム画面の「GAME START」をクリックする直前に、"
 	+ "F12キー(MacOSでは⌘+Option+I)を押して Chormeブラウザのデベロッパーツールを起動する.</li>"
 	+ "<li>デベロッパーツールがゲーム画面を圧迫しないように、"
@@ -273,12 +271,15 @@ var predeck = "";
 var sim_info = "";
 
 function copy_button() {
+	$button_onclick["YPS_compass"] = function() {
+		chrome.runtime.sendMessage({openCompass: true});
+	};
 	$button_onclick["YPS_sim"] = function() {
 		window.open(
 			'https://noro6.github.io/kc-web#import:' + sim_info,
 			'YPS_sim');
 	};
-	$button_onclick["YPS_go_deck"] = function() {
+	$button_onclick["YPS_go_deck"] = function(event) {
 		event.preventDefault(); // 規定の動作を無効化する.
 		this.href = 'http://kancolle-calc.net/deckbuilder.html?predeck=' + predeck;
 		window.open(this.href, this.target);
@@ -301,60 +302,35 @@ function copy_button() {
 		document.execCommand('copy');
 	};
 	return ' <input id="YPS_sim" type="button" value="制空権シミュ"/>'
+		+ ' <input id="YPS_compass" type="button" value="艦隊コンパス" title="受信済みデータのダッシュボードを開く">'
 		+ ' <input id="YPS_ship" type="button" value="艦娘情報Copy"/>'
 		+ ' <input id="YPS_slot" type="button" value="装備情報Copy"/>'
-		+ ' <a href="http://kancolle-calc.net/deckbuilder.html" target="KanColle-YPS-to-deckbuilder" id="YPS_go_deck">デッキビルダー</a>:'
 		+ ' <input id="YPS_deck" type="button" value="艦隊情報Copy"/>'
+		+ ' <input id="YPS_senka_edit" type="button" value="戦果手動入力">'
 		;
-}
-
-var $notification_enabled = false;
-chrome.storage.local.get('yps_notification_enabled', function(res) {
-	if (res && typeof res.yps_notification_enabled === 'boolean') {
-		$notification_enabled = res.yps_notification_enabled;
-	}
-	var btn = document.getElementById('YPS_notification');
-	if (btn) {
-		btn.value = $notification_enabled ? '通知: ON' : '通知: OFF';
-	}
-});
-
-if (chrome.storage.onChanged) {
-	chrome.storage.onChanged.addListener(function(changes, area) {
-		if (area === 'local' && changes.yps_notification_enabled) {
-			$notification_enabled = !!changes.yps_notification_enabled.newValue;
-			var btn = document.getElementById('YPS_notification');
-			if (btn) {
-				btn.value = $notification_enabled ? '通知: ON' : '通知: OFF';
-			}
-		}
-	});
-}
-
-function notification_button() {
-	$button_onclick["YPS_notification"] = function() {
-		$notification_enabled = !$notification_enabled;
-		this.value = $notification_enabled ? '通知: ON' : '通知: OFF';
-		chrome.storage.local.set({ 'yps_notification_enabled': $notification_enabled });
-	};
-	var label = $notification_enabled ? '通知: ON' : '通知: OFF';
-	return ' <input id="YPS_notification" type="button" value="' + label + '"/>';
 }
 
 function version_banner() {
 	return ' <a href="' + home_url + '" target="KanColle-YPS-website" id="YPS_go_help">KanColle-YPS ' + ver_name + '</a>';
 }
 
+function render_compass_navigation() {
+	navi.innerHTML = all_close_button() + history_buttons() + version_banner()
+		+ '<br/>' + copy_button();
+	update_button_target();
+}
+
 //------------------------------------------------------------------------
 // 表示内容受信.
 //
 chrome.runtime.onMessage.addListener(function (req) {
+	if(req.type==='yps-compass-status')return;
+	if(req.type==='yps-startup-status')return;
+	if (req.nozakiTimer || req.type === 'updated' || req.type === 'save-error' || req.type === 'yps-senka-local') return;
 	if (!div.parentNode) document.body.replaceChild(div, hst); // 履歴表示を中断する.
 	if (req instanceof Array) {
-		div.innerHTML = parse_markdown(req);
-		navi.innerHTML = all_close_button() + history_buttons() + version_banner() + "<br/>"
-			+ copy_button() + "<br/>"
-			+ notification_button();
+		div.innerHTML = parse_markdown(ypsOriginalSections(req));
+		render_compass_navigation();
 	}
 	else if (req.appendData) {
 		pop_history();
@@ -370,14 +346,15 @@ chrome.runtime.onMessage.addListener(function (req) {
 		temp.innerHTML = parse_markdown(req.interruptData.value);
 	}
 	else if (req.ship_export_json) {
-		ship_textarea.innerText = req.ship_export_json;
-		slot_textarea.innerText = req.slot_export_json;
-		deck_textarea.innerText = req.deck_export_json;
+		ship_textarea.textContent = req.ship_export_json;
+		slot_textarea.textContent = req.slot_export_json;
+		deck_textarea.textContent = req.deck_export_json;
 		predeck = encodeURIComponent(req.deck_export_json);
 		sim_info = '{"ships": '  + req.ship_export_json
 				+ ',"items": '   + req.slot_export_json
 				+ ',"predeck": ' + req.deck_export_json
 				+ '}';
+		return; // Copy buffers do not change the visible report or its history.
 	}
 	else { // may be String
 		pop_history();
@@ -389,3 +366,6 @@ chrome.runtime.onMessage.addListener(function (req) {
 	update_button_target();			// 更新したHTMLに対して、ターゲット表示/非表示を反映する.
 	update_histinfo();				// 履歴個数表示を更新する.
 });
+
+// The dashboard can be opened even before the first mother-port response.
+render_compass_navigation();

@@ -1,0 +1,53 @@
+import {normalize,reduce,emptyState} from '../core.js';
+import {commit,load,backup,saveGoal,saveLocal,scoreHistory} from '../db.js';
+const result=document.querySelector('#result');
+document.querySelector('#run').onclick=async()=>{try{
+  const checks=[];const check=(v,label)=>{if(!v)throw Error(label);checks.push('PASS '+label);};
+  const id=crypto.randomUUID(),at=new Date().toISOString();
+  const e=normalize('/api_port/port',{api_result:1,api_data:{api_ship:[],api_material:[{api_id:1,api_value:12345}]}},at,id);
+  const before=await backup();await commit(e,reduce,emptyState());check((await load()).resources[0]===12345,'canonical state persisted');
+  check((await commit(e,reduce,emptyState())).duplicate,'duplicate event ignored');
+  const b=await backup();check(b.events.length===before.events.length+1&&b.snapshots.length===before.snapshots.length+1,'snapshot and event committed exactly once');
+  const count=(await load()).goals.length;await Promise.all([saveGoal({id:crypto.randomUUID(),title:'Test A'},emptyState()),saveGoal({id:crypto.randomUUID(),title:'Test B'},emptyState())]);check((await load()).goals.length===count+2,'concurrent goal writes retain both goals');
+  const persisted=await load();let aborted=false;try{await commit({...e,id:crypto.randomUUID()},()=>{throw Error('deliberate abort');},emptyState());}catch{aborted=true;}check(aborted&&JSON.stringify(await load())===JSON.stringify(persisted),'failed transaction does not alter canonical state');
+  await saveLocal('quest-plan',{questId:9001,fleetId:1,shipIds:[1],equipmentIds:[100],note:'Test plan'},emptyState());
+  check((await load()).questPlans[9001].equipmentIds[0]===100,'quest-plan relationships persist in canonical state');
+  await saveLocal('quest-plan',{questId:9001,fleetId:2,shipIds:[1],equipmentIds:[100],note:'Revised plan'},emptyState());
+  check((await backup()).events.some(e=>e.path==='local/quest-plan'&&e.previous?.fleetId===1&&e.plan?.fleetId===2),'previous quest-plan revision retained in event log');
+  await saveLocal('score-bonus',{value:10,kind:'EO',month:'2026-09',note:'Synthetic test'},emptyState());
+  const batch=[];for(let i=0;i<161;i++)batch.push(commit({id:id+':xp:'+i,at:new Date(Date.parse(at)+i).toISOString(),path:'/api_get_member/basic',patch:{commanderExperience:i*10000}},reduce,emptyState()));await Promise.all(batch);
+  const scores=await scoreHistory();check(scores.filter(e=>e.id.startsWith(id+':xp:')).length===161,'all score observations survive history view limit');
+  check(scores.some(e=>e.bonus?.note==='Synthetic test'),'manual bonus is in score history');
+  let listener,bodyReads=0,done=0;const messages=[];const priorChrome=globalThis.chrome;
+  globalThis.chrome={devtools:{network:{onRequestFinished:{addListener(fn){listener=fn;}}}},runtime:{sendMessage:async m=>{messages.push(m);done++;}}};
+  await import('../collector-integrated.js');
+  listener({request:{url:'https://play.games.dmm.com/kcsapi/api_port/port'},getContent(){bodyReads++;}});check(bodyReads===0,'DMM response body never read');
+  const packet=(fuel,delay)=>({request:{url:'https://game.example/kcsapi/api_port/port'},getContent(cb){bodyReads++;setTimeout(()=>cb('svdata='+JSON.stringify({api_result:1,api_data:{api_ship:[],api_material:[{api_id:1,api_value:fuel}]}})),delay);}});
+  listener(packet(300,50));listener(packet(200,0));
+  await new Promise((resolve,reject)=>{const start=Date.now(),timer=setInterval(()=>{if(done>=2){clearInterval(timer);resolve();}else if(Date.now()-start>5000){clearInterval(timer);reject(Error('collector timeout'));}},10);});
+  check((await load()).resources[0]===200,'out-of-order getContent callbacks preserve receive order');check(messages.every(m=>m.type==='updated'),'collector reports successful writes');
+  async function sendCaptured(path,data,encoding=''){
+    const target=messages.length+1,content='svdata='+JSON.stringify({api_result:1,api_data:data});
+    listener({request:{url:'https://game.example/kcsapi'+path},getContent(cb){cb(encoding==='base64'?btoa(content):content,encoding);}});
+    const end=Date.now()+5000;while(messages.length<target){if(Date.now()>end)throw Error('capture timeout');await new Promise(r=>setTimeout(r,10));}
+  }
+  await sendCaptured('/api_req_map/start',{api_maparea_id:4,api_mapinfo_no:5,api_no:3});
+  await sendCaptured('/api_req_sortie/battleresult',{api_win_rank:'B'});
+  await sendCaptured('/api_req_map/next',{api_no:32},'base64');
+  check((await load()).location.node===32,'Base64 next response updates T node');
+  await sendCaptured('/api_req_sortie/battleresult',{api_win_rank:'S'});
+  await sendCaptured('/api_req_sortie/battleresult',{api_win_rank:'S'});
+  const battles=(await backup()).events.filter(e=>e.battle);
+  check(battles.some(e=>e.battle.location?.node===32),'T battle result saved with received position');
+  check(battles.some(e=>e.battle.location?.area===4&&e.battle.location?.node===null),'result without next has unknown node');
+  let releaseSync;
+  const slowSnapshot=new Promise(resolve=>releaseSync=resolve),oldSenka=globalThis.ypsSenka;
+  globalThis.ypsSenka={snapshot:()=>slowSnapshot};
+  globalThis.dispatchEvent(new Event('yps-senka-changed'));
+  await new Promise(r=>setTimeout(r,250));
+  await sendCaptured('/api_req_map/next',{api_no:3});
+  check((await load()).location.node===3,'slow quest synchronization does not block response recording');
+  releaseSync({at:Date.now(),quests:[]});await new Promise(r=>setTimeout(r,30));
+  globalThis.ypsSenka=oldSenka;
+  globalThis.chrome=priorChrome;result.textContent=checks.join('\n')+'\nALL '+checks.length+' PASSED';
+}catch(error){result.textContent='FAIL '+error.stack;}};
