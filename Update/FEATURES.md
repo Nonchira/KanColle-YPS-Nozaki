@@ -18,8 +18,8 @@
 | ドロップ | drop-ui.js、activityFact | 全保存履歴から艦種・艦名・マス・結果を抽出。ページ50/100件 | drop-ui.test.js |
 | 任務・期限管理 | quest-catalog.js、quest-manager.js、quest-progress.js、quest-ui.js、yps-quest-progress.js | Wiki定義＋受信任務一覧＋周期・前提・手動補正。未観測は未確認 | quest-manager.test.js |
 | 戦果集計画面 | insights.js、score-ui.js | 提督経験値の観測差分と手動加算を分離。EO等を自動二重加算しない | insights.test.js |
-| 通常海域候補 | generator.js / generator-ui.js / generator-demo.js | 出典付きゲージ別テンプレートを保有艦・装備へ置換 | generator.test.js |
-| 遠征候補 | expedition-ui.js、generator.js | 必要艦種・数・装備・レベル・大成功条件の照合 | expedition.test.js |
+| 通常海域候補 | map-profiles.js / generator.js / generator-ui.js / generator-demo.js | 出典付きゲージ別テンプレートを保有艦・装備へ置換 | generator.test.js |
+| 遠征候補 | expedition-data.js / expedition-rules.js / expedition-ui.js | 必要艦種・数・装備・レベル・大成功条件の照合 | expedition.test.js |
 | 元表示の保持 | original-sections.js: ypsOriginalSections、content.js | 既存一覧と戦闘表示を置換しない | test/original-sections.test.cjs |
 | 戦闘欠落耐性 | devtools.js: battle_fdeck / push_battle_mvp / on_battle | 艦隊番号や艦情報不足でも例外で止めない。不明な艦隊を推測しない | test/battle-fleet.test.cjs |
 | UIとローカル連携 | content.js: copy_button / render_compass_navigation、background.js、style-yps.css | コンパスを制空権シミュの右へ。ローカル状態メッセージを本文へ流さない | test/compass-toolbar.html |

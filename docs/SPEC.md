@@ -1,4 +1,4 @@
-# KanColle-YPS v2.3.1 +NozakiTimer v1.0.0仕様書
+# KanColle-YPS v2.3.1 +NozakiTimer v1.0.1仕様書
 
 この文書を本派生版の仕様として扱います。上流KanColle-YPSを基に、野埼タイマーを中心に、戦果メモ、行動履歴、艦隊コンパス、任務・期限管理を追加した非公式派生版です。
 

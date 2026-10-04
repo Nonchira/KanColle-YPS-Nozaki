@@ -11,3 +11,7 @@ wk.*/
 knowledge-domain.json
 __pycache__/
 *.pyc
+
+# Local pocket reference data (publication review required)
+compass/pocket/site/
+compass/pocket/development/workbook.json

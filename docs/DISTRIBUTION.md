@@ -5,7 +5,7 @@
 リポジトリのルートで次を実行します（Python 3）。出力先は既存ファイルを指定しないでください。
 
 ```text
-python tools/package-release.py --output ../KanColle-YPS-Nozaki-v1.0.0.zip
+python tools/package-release.py --output ../KanColle-YPS-Nozaki-v1.0.1.zip
 ```
 
 配布対象は明示されたファイル一覧です。.git、ブラウザの保存領域、個人用設定、作業ログ、バックアップ、内部knowledge-domain.json、過去の更新ツール実行結果は含めません。ZIP内のUpdate/release-files.jsonに、収録対象とSHA-256を記載します。

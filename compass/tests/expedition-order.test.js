@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {orderedMissions} from '../expedition-ui.js';
+test('time order puts unknown last without mutating master',()=>{const state={missionMaster:{1:{id:1,mapArea:1,durationMin:120},2:{id:2,mapArea:2,durationMin:20},3:{id:3,mapArea:1,durationMin:null},4:{id:4,mapArea:1,durationMin:20}}};assert.deepEqual(orderedMissions(state,'time').map(x=>x.id),[4,2,1,3]);assert.deepEqual(orderedMissions(state,'area').map(x=>x.id),[1,3,4,2]);assert.deepEqual(Object.keys(state.missionMaster),['1','2','3','4']);});

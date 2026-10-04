@@ -8,6 +8,7 @@
 - [野埼タイマー](NOZAKI.md)
 - [戦果メモ・任務定義と出典](SENKA.md)
 - [艦隊コンパス](FLEET-COMPASS.md)
+- [通常海域・遠征の条件確認](MAP-EXPEDITION-AUDIT.md)
 
 ## 検証と配布
 

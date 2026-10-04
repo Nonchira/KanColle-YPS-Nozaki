@@ -6,12 +6,48 @@ import {profileNote} from '../generator-ui.js';
 import {normalize,reduce,emptyState} from '../core.js';
 const now=Date.parse('2026-09-07T00:00:00Z');
 const run=(s,o={})=>generateFleet(s,{now,...o});
+
+function diverse44(){
+  const s=emptyState();s.ships={};
+  [7,7,7,7,3,2,2,2,11,18,9,6].forEach((type,i)=>{
+    const id=i+1;s.shipMaster[id]={id,type,speed:10,slotCount:0,name:`test${id}`};
+    s.ships[id]={id,masterId:id,hp:30,maxHp:30,level:type===7?150:30,cond:49,slots:[]};
+  });return s;
+}
+test('4-4 auto prioritizes three distinct compositions even when light carriers score higher',()=>{
+  const s=diverse44(),before=JSON.stringify(s),r=run(s,{mapId:'4-4'});
+  assert.equal(r.candidates.length,3);
+  assert.deepEqual(r.candidates.map(c=>c.ships.map(x=>s.shipMaster[x.masterId].type).sort((a,b)=>a-b)),[
+    [2,2,3,7,7,7],[2,2,6,7,11,18],[2,2,6,9,11,18]
+  ]);
+  assert.deepEqual(r.candidates.map(c=>c.variant),['基本編成','別編成案','別編成案']);
+  assert.equal(JSON.stringify(s),before);
+});
+test('4-4 unavailable battleship does not displace feasible alternative or invent ships',()=>{
+  const s=diverse44();s.docks=[{shipId:11}];
+  const r=run(s,{mapId:'4-4'});
+  assert.match(r.candidates[1].template,/空母主体/);
+  assert.equal(r.candidates.length,2); // No padding with the same light-carrier composition.
+  assert.ok(r.candidates.every(c=>c.ships.every(x=>x.id!==11)));
+  assert.equal(new Set(r.candidates.map(c=>c.key)).size,r.candidates.length);
+  delete s.ships[9];delete s.ships[10];
+  assert.ok(run(s,{mapId:'4-4'}).candidates.every(c=>c.template.startsWith('軽量')));
+});
+test('4-4 can fall back to a valid heavy fleet without three light carriers',()=>{
+  const s=diverse44();for(const id of [1,2,3,4])delete s.ships[id];
+  const r=run(s,{mapId:'4-4'});assert.ok(r.candidates.length);
+  assert.ok(r.candidates.every(c=>c.template.startsWith('戦艦入り')));
+});
+test('other maps with multiple templates also prioritize distinct compositions',()=>{
+  const {state:s}=demoData();const r=run(s);
+  assert.equal(new Set(r.candidates.slice(0,2).map(c=>c.template)).size,2);
+});
 test('1-5 uses four eligible ASW surface ships; never submarines, docks or expeditions',()=>{const {state:s}=demoData();s.shipMaster[20]={type:13};s.ships[20]={...s.ships[1],id:20,masterId:20,level:999};const r=run(s);assert.ok(r.candidates.length);for(const c of r.candidates){assert.equal(c.ships.length,4);assert.ok(c.ships.every(x=>[2,3,1].includes(s.shipMaster[x.masterId].type)));assert.ok(c.ships.every(x=>![3,7,8,20].includes(x.id)));}});
 test('2-1 imposes six slots and high-speed CL AV DD composition',()=>{const {state:s}=demoData();const r=run(s,{mapId:'2-1'});assert.ok(r.candidates.length);const ts=r.candidates[0].ships.map(x=>s.shipMaster[x.masterId].type);assert.equal(ts.filter(x=>x===2).length,4);assert.equal(ts.filter(x=>x===3).length,1);assert.equal(ts.filter(x=>x===16).length,1);s.shipMaster[14].speed=null;assert.equal(run(s,{mapId:'2-1'}).candidates.length,0);});
 test('hybrid preserves fixed ship and manually fixed mode never silently fills or replaces',()=>{const {state:s}=demoData();const r=run(s,{mode:'hybrid',selectedIds:[11]});assert.ok(r.candidates.every(c=>c.ships[0].id===11));const m=run(s,{mode:'manual',selectedIds:[1,11]});assert.ok(m.candidates.every(c=>c.ships.length===2));const badRoute=run(s,{mode:'manual',selectedIds:[5]});assert.equal(badRoute.candidates[0].ships[0].id,5);assert.match(badRoute.warnings.join(),/適合しません/);assert.throws(()=>run(s,{mode:'manual',selectedIds:[3]}),/大破/);assert.throws(()=>run(s,{mode:'manual',selectedIds:[]}));assert.throws(()=>run(s,{mode:'hybrid',selectedIds:[1,1]}));});
 test('ASW and AA change allocated equipment; owned IDs are unique including expansion slot',()=>{const {state:s}=demoData();const a=run(s,{mapId:'custom',mode:'manual',selectedIds:[1,11],policy:'対潜優先'}).candidates[0];const b=run(s,{mapId:'custom',mode:'manual',selectedIds:[1,11],policy:'対空優先'}).candidates[0];assert.ok(a.equipment[0].items.some(x=>x.masterId===101));assert.ok(b.equipment[0].items.some(x=>x.masterId===103));const ids=a.equipment.flatMap(x=>x.items.map(i=>i.id));assert.equal(ids.length,new Set(ids).size);assert.equal(a.equipment[0].items.find(x=>x.slot==='ix').id,9);assert.equal(candidateDeck(a,s).f1.s1.items.ix.id,3);});
 test('missing compatibility does not fabricate equipment; slot count and ship exceptions enforced',()=>{const {state:s}=demoData(),ship=s.ships[11],item=s.equipment[100];delete s.shipTypes;assert.equal(canEquip(s,ship,item,0).allowed,false);s.shipEquipRules={[ship.masterId]:{14:[101]}};assert.equal(canEquip(s,ship,item,0).allowed,true);s.shipEquipRules[ship.masterId][14]=[999];assert.equal(canEquip(s,ship,item,0).allowed,false);s.shipMaster[11].slotCount=1;const c=run(s,{mapId:'custom',mode:'manual',selectedIds:[11]}).candidates[0];assert.ok(c.equipment[0].items.every(x=>x.slot==='i1'));});
-test('template expiry degrades explicitly and unknown map is rejected',()=>{const {state:s}=demoData();assert.equal(profileFor(s,'1-5',Date.parse('2027-01-01')).source,null);assert.throws(()=>profileFor(s,'E-999',now));});
+test('template expiry degrades explicitly and unknown map is rejected',()=>{const {state:s}=demoData();assert.equal(profileFor(s,'1-5',Date.parse('2027-02-01')).source,null);assert.throws(()=>profileFor(s,'E-999',now));});
 test('unregistered received maps do not fabricate a generic auto fleet',()=>{const {state:s}=demoData();s.mapMaster={999:{area:7,map:6,name:'受信海域'}};const r=run(s,{mapId:'7-6'});assert.equal(r.candidates.length,0);assert.match(r.warnings.join(' '),/未登録|未登録です/);});
 test('observed master schema normalizes equipment types, ship slots and map data',()=>{const e=normalize('/api_start2/getData',{api_result:1,api_data:{api_mst_ship:[{api_id:1,api_stype:2,api_slot_num:3,api_soku:10}],api_mst_slotitem:[{api_id:101,api_type:[0,0,14],api_tais:10}],api_mst_stype:[{api_id:2,api_equip_type:{14:1}}],api_mst_equip_ship:{1:{api_equip_type:{14:[101]}}},api_mst_mapinfo:[{api_id:15,api_maparea_id:1,api_no:5,api_name:'map'}]}},new Date(now).toISOString(),'master');const s=reduce(emptyState(),e).state;assert.equal(s.equipmentMaster[101].asw,10);assert.equal(s.shipMaster[1].slotCount,3);assert.equal(s.mapMaster[15].map,5);assert.deepEqual(s.shipEquipRules[1][14],[101]);});
 test('candidate search leaves canonical state and equipment unchanged',()=>{const {state:s}=demoData(),before=JSON.stringify(s);run(s);assert.equal(JSON.stringify(s),before);});
