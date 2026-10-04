@@ -1,6 +1,6 @@
 # 野埼タイマーの使い方
 
-対象バージョン: **KanColle-YPS v2.3.1 +NozakiTimer v1.0.1**
+対象バージョン: **KanColle-YPS v2.3.1 +NozakiTimer v1.0.2**
 
 導入と更新は [README](../README.md)、変更内容は [バージョン変更情報](../CHANGELOG.md) を参照してください。
 

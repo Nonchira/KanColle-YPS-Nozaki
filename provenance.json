@@ -2,7 +2,7 @@
   "schema_version": 2,
   "upstream": "https://github.com/hkuno9000/KanColle-YPS",
   "base_version": "2.3.1",
-  "fork_version": "1.0.1",
+  "fork_version": "1.0.2",
   "original_files": [
     {
       "path": ".gitignore",

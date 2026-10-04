@@ -1,4 +1,4 @@
-# KanColle-YPS v2.3.1 +NozakiTimer v1.0.1
+# KanColle-YPS v2.3.1 +NozakiTimer v1.0.2
 
 [KanColle-YPS](https://github.com/hkuno9000/KanColle-YPS) v2.3.1を基にした非公式の派生版です。野埼タイマー、戦果メモ、行動・ドロップ履歴、任務・期限管理、艦隊コンパスを追加しています。原作者による公式版・推奨版ではありません。
 
@@ -6,9 +6,9 @@
 
 公開リポジトリ: [Nonchira/KanColle-YPS-Nozaki](https://github.com/Nonchira/KanColle-YPS-Nozaki)
 
-[ZIPをダウンロード](https://github.com/Nonchira/KanColle-YPS-Nozaki/releases/download/v1.0.1/KanColle-YPS-Nozaki-v1.0.1-public.zip)して、展開先のmanifest.jsonがあるフォルダを読み込んでください。
+[ZIPをダウンロード](https://github.com/Nonchira/KanColle-YPS-Nozaki/releases/download/v1.0.2/KanColle-YPS-Nozaki-v1.0.2-public.zip)して、展開先のmanifest.jsonがあるフォルダを読み込んでください。
 
-このv1.0.1は動作確認済みの派生版構成です。上流masterの最新機能すべてを取り込んだ版ではありません。比較基準はUpdate/baseline.jsonに記録し、以後の上流変更は個別に確認して移植します。
+このv1.0.2は動作確認済みの派生版構成です。上流masterの最新機能すべてを取り込んだ版ではありません。比較基準はUpdate/baseline.jsonに記録し、以後の上流変更は個別に確認して移植します。
 
 ## インストール
 
@@ -52,7 +52,7 @@ YPS本体の母港処理後に艦隊コンパスを読み込みます。待機�
 
 オリジナルの更新は、本派生版への単純上書きでは追加機能が失われます。[Update/README.md](Update/README.md) に、基準版との比較・機能別移植・検証手順を収録しています。自動更新・定期監視はありません。
 
-派生版番号は **v1.0.1**、Chrome内部番号は **2.3.1.2** です。基準YPSのv2.3.1と、派生版の番号は別に管理します。変更内容は [CHANGELOG.md](CHANGELOG.md) を参照してください。
+派生版番号は **v1.0.2**、Chrome内部番号は **2.3.1.3** です。基準YPSのv2.3.1と、派生版の番号は別に管理します。変更内容は [CHANGELOG.md](CHANGELOG.md) を参照してください。
 
 ## ドキュメント
 
