@@ -1,5 +1,4 @@
 [
-  ".gitattributes",
   ".gitignore",
   "CHANGELOG.md",
   "README.md",
@@ -40,6 +39,7 @@
   "compass/demo.js",
   "compass/drop-ui.js",
   "compass/expedition-data.js",
+  "compass/expedition-rewards-data.js",
   "compass/expedition-rules.js",
   "compass/expedition-ui.js",
   "compass/generator-demo.js",
@@ -66,6 +66,7 @@
   "compass/tests/drop-ui.test.js",
   "compass/tests/equipment-count.test.js",
   "compass/tests/expedition-order.test.js",
+  "compass/tests/expedition-rewards.test.js",
   "compass/tests/expedition-rules.test.js",
   "compass/tests/expedition.test.js",
   "compass/tests/generator-equipment.test.js",
